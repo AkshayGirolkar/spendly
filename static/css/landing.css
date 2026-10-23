@@ -182,6 +182,61 @@
 .lp-bar-travel { background: #3b78d8; }
 .lp-bar-bills { background: #7b68d9; }
 
+/* Video modal */
+
+.lp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(15, 15, 15, 0.7);
+}
+
+.lp-modal[hidden] { display: none; }
+
+.lp-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    background: var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.lp-modal-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--ink);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.lp-modal-close:hover { background: var(--paper-card); }
+
+.lp-modal-video {
+    aspect-ratio: 16 / 9;
+}
+
+.lp-modal-video iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
 @media (max-width: 700px) {
     .lp-hero { padding: 3rem 1rem 2rem; }
     .lp-stats { grid-template-columns: 1fr; }
