@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Spendly{% endblock %}
+
+{% block content %}
+
+<section class="legal-section">
+    <div class="legal-container">
+
+        <div class="legal-header">
+            <div class="hero-badge">Legal</div>
+            <h1 class="legal-title">Privacy <em>Policy</em></h1>
+            <p class="legal-updated">Last updated: October 2026</p>
+        </div>
+
+        <div class="legal-card">
+            <div class="legal-block">
+                <h2 class="legal-heading"><span class="legal-num">01</span>Data We Collect</h2>
+                <p>
+                    When you create an account, we collect your name, email address, and a
+                    securely hashed version of your password. When you use Spendly, we store
+                    the expenses you enter, including amounts, categories, dates, and
+                    descriptions. We do not collect bank account, card, or payment details.
+                </p>
+            </div>
+
+            <div class="legal-block">
+                <h2 class="legal-heading"><span class="legal-num">02</span>How We Use Your Data</h2>
+                <p>
+                    Your data is used only to run Spendly for you: signing you in, showing
+                    your expenses, and generating summaries and category breakdowns. We do
+                    not sell your data, use it for advertising, or share it with anyone
+                    except as described in this policy.
+                </p>
+            </div>
+
+            <div class="legal-block">
+                <h2 class="legal-heading"><span class="legal-num">03</span>Data Storage</h2>
+                <p>
+                    Your data is stored in our database and is accessible only through your
+                    account. Passwords are never stored in plain text. We keep your data for
+                    as long as your account is active; when you delete expenses or your
+                    account, the related data is removed.
+                </p>
+            </div>
+
+            <div class="legal-block">
+                <h2 class="legal-heading"><span class="legal-num">04</span>Third Party Services</h2>
+                <p>
+                    Spendly loads fonts from Google Fonts, which may receive basic technical
+                    information such as your IP address when pages load. We do not use
+                    third-party analytics or advertising trackers. If we add other services
+                    in the future, we will update this policy.
+                </p>
+            </div>
+
+            <div class="legal-block">
+                <h2 class="legal-heading"><span class="legal-num">05</span>Contact Us</h2>
+                <p>
+                    If you have questions about this Privacy Policy or want to request access
+                    to or deletion of your data, contact us at privacy@example.com.
+                </p>
+            </div>
+        </div>
+
+        <a href="{{ url_for('landing') }}" class="legal-back">← Back to home</a>
+
+    </div>
+</section>
+
+{% endblock %}
