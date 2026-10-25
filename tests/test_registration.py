@@ -96,8 +96,8 @@ def test_email_without_at_rejected(client):
 
 
 def test_failed_submit_keeps_name_and_email_not_password(client):
-    resp = _post(client, name="Jane", email="jane@example.com", password="short")
+    resp = _post(client, name="Jane", email="jane@example.com", password="s3cretX")
     html = resp.get_data(as_text=True)
     assert 'value="Jane"' in html
     assert 'value="jane@example.com"' in html
-    assert "short\"" not in html.replace('placeholder="Min. 8 characters"', "")
+    assert "s3cretX" not in html
