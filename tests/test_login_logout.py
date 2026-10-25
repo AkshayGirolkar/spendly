@@ -35,7 +35,7 @@ def test_login_page_renders_with_url_for_action(client):
 def test_demo_login_redirects_and_sets_session(client):
     resp = _login(client)
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
     assert _session(client).get("user_id") is not None
 
 
@@ -83,7 +83,14 @@ def test_login_redirects_when_already_logged_in(client):
     _login(client)
     for resp in (client.get("/login"), _login(client)):
         assert resp.status_code == 302
-        assert resp.headers["Location"].endswith("/")
+        assert resp.headers["Location"].endswith("/profile")
+
+
+def test_register_redirects_to_profile_when_logged_in(client):
+    _login(client)
+    resp = client.get("/register")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/profile")
 
 
 def test_logout_clears_session_and_navbar(client):

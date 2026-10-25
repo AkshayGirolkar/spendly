@@ -65,6 +65,45 @@ def get_user_by_id(user_id):
         conn.close()
 
 
+def get_expense_summary(user_id):
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT COALESCE(ROUND(SUM(amount), 2), 0) AS total, COUNT(*) AS count "
+            "FROM expenses WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        return {"total": row["total"], "count": row["count"]}
+    finally:
+        conn.close()
+
+
+def get_category_totals(user_id):
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT category, ROUND(SUM(amount), 2) AS total "
+            "FROM expenses WHERE user_id = ? "
+            "GROUP BY category ORDER BY total DESC, category ASC",
+            (user_id,),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_recent_expenses(user_id, limit=10):
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT id, amount, category, date, description "
+            "FROM expenses WHERE user_id = ? "
+            "ORDER BY date DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
 def create_user(name, email, password):
     conn = get_db()
     try:
