@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — Spendly{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+    <div class="profile-card">
+        <div class="profile-avatar">{{ user["name"][0]|upper }}</div>
+        <div>
+            <h1 class="profile-name">{{ user["name"] }}</h1>
+            <p class="profile-email">{{ user["email"] }}</p>
+            {% if member_since %}
+            <p class="profile-since">Member since {{ member_since }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-stats">
+        <div class="stat-tile">
+            <span class="stat-label">Total spent</span>
+            <span class="stat-value">{{ "%.2f"|format(summary.total) }}</span>
+        </div>
+        <div class="stat-tile">
+            <span class="stat-label">Expenses</span>
+            <span class="stat-value">{{ summary.count }}</span>
+        </div>
+    </div>
+
+    {% if summary.count == 0 %}
+    <div class="empty-state">
+        <p>No expenses yet.</p>
+    </div>
+    {% else %}
+    <section class="profile-section">
+        <h2 class="section-title">Spending by category</h2>
+        <ul class="category-list">
+            {% for c in categories %}
+            {% set pct = ((c["total"] / summary.total * 100)|round(1)) if summary.total else 0 %}
+            <li class="category-row">
+                <span class="category-name">{{ c["category"] }}</span>
+                <span class="category-amount">{{ "%.2f"|format(c["total"]) }}</span>
+                <span class="category-pct">{{ pct }}%</span>
+                <div class="category-bar">
+                    {# width is data-driven, so it cannot live in the stylesheet #}
+                    <div class="category-bar-fill" style="width: {{ [pct, 100]|min }}%"></div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="profile-section">
+        <h2 class="section-title">Recent expenses</h2>
+        <div class="expense-table-wrap">
+            <table class="expense-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th class="amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in recent %}
+                    <tr>
+                        <td>{{ e["date"] }}</td>
+                        <td><span class="category-chip">{{ e["category"] }}</span></td>
+                        <td>{{ e["description"] or "—" }}</td>
+                        <td class="amount">{{ "%.2f"|format(e["amount"]) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,11 +1,15 @@
 import os
 import sqlite3
+from datetime import datetime
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
 from database.db import (
     create_user,
+    get_category_totals,
+    get_expense_summary,
+    get_recent_expenses,
     get_user_by_email,
     get_user_by_id,
     init_db,
@@ -57,7 +61,7 @@ def _validate_registration(name, email, password):
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if _get_current_user():
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
     if request.method == "GET":
         return render_template("register.html")
 
@@ -82,7 +86,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if _get_current_user():
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
     if request.method == "GET":
         return render_template("login.html")
 
@@ -97,7 +101,7 @@ def login():
 
     session.clear()
     session["user_id"] = user["id"]
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 @app.route("/logout")
@@ -120,9 +124,26 @@ def privacy():
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
 
+def _format_member_since(raw):
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d %H:%M:%S").strftime("%B %Y")
+    except (ValueError, TypeError):
+        return raw[:10] if raw else ""
+
+
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    user = _get_current_user()
+    if user is None:
+        return redirect(url_for("login"))
+    return render_template(
+        "profile.html",
+        user=user,
+        member_since=_format_member_since(user["created_at"]),
+        summary=get_expense_summary(user["id"]),
+        categories=get_category_totals(user["id"]),
+        recent=get_recent_expenses(user["id"]),
+    )
 
 
 @app.route("/expenses/add")
