@@ -1,11 +1,14 @@
 import os
 import sqlite3
 from datetime import date, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
 from database.db import (
+    CATEGORIES,
+    create_expense,
     create_user,
     get_category_totals,
     get_expense_summary,
@@ -217,9 +220,95 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+MAX_AMOUNT = Decimal("1000000")
+MAX_DESCRIPTION_LENGTH = 200
+
+
+def _validate_amount(raw):
+    raw = (raw or "").strip()
+    if not raw:
+        return None, "Amount is required."
+    try:
+        amount = Decimal(raw)
+    except InvalidOperation:
+        return None, "Amount must be a number."
+    if not amount.is_finite():
+        return None, "Amount must be a number."
+    if amount <= 0:
+        return None, "Amount must be greater than 0."
+    # bound check first so quantize never sees a huge exponent
+    if amount > MAX_AMOUNT:
+        return None, "Amount cannot exceed 1,000,000."
+    if amount != amount.quantize(Decimal("0.01")):
+        return None, "Amount can have at most 2 decimal places."
+    return float(amount), None
+
+
+def _validate_expense(form):
+    """Return (clean, error); clean is None when error is set."""
+    amount, error = _validate_amount(form.get("amount"))
+    if error:
+        return None, error
+
+    category = form.get("category", "").strip()
+    if category not in CATEGORIES:
+        return None, "Please choose a valid category."
+
+    raw_date = form.get("date", "").strip()
+    if not raw_date:
+        return None, "Date is required."
+    expense_date, date_error = _parse_date(raw_date)
+    if date_error:
+        return None, f"Date is {date_error}."
+    if expense_date > date.today().isoformat():
+        return None, "Date cannot be in the future."
+
+    description = form.get("description", "").strip()
+    if len(description) > MAX_DESCRIPTION_LENGTH:
+        return None, f"Description must be {MAX_DESCRIPTION_LENGTH} characters or fewer."
+
+    return {
+        "amount": amount,
+        "category": category,
+        "date": expense_date,
+        "description": description or None,
+    }, None
+
+
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    user = _get_current_user()
+    if user is None:
+        return redirect(url_for("login"))
+
+    today = date.today().isoformat()
+    if request.method == "GET":
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            today=today,
+            form={"date": today},
+            error=None,
+        )
+
+    clean, error = _validate_expense(request.form)
+    if error:
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            today=today,
+            form=request.form,
+            error=error,
+        )
+
+    create_expense(
+        user["id"],
+        clean["amount"],
+        clean["category"],
+        clean["date"],
+        clean["description"],
+    )
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/edit")

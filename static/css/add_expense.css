@@ -1,0 +1,15 @@
+textarea.form-input {
+    min-height: 96px;
+    resize: vertical;
+    font-family: var(--font-body);
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-actions .btn-submit {
+    flex: 1;
+}
