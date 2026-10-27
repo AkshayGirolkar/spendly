@@ -31,6 +31,7 @@
             </div>
             <button type="submit" class="btn-primary">Apply</button>
             <a class="btn-ghost" href="{{ url_for('profile') }}">Clear</a>
+            <a class="btn-primary" href="{{ url_for('add_expense') }}">Add expense</a>
         </form>
         <div class="filter-presets">
             {% for preset in presets %}
@@ -63,6 +64,7 @@
     {% if summary.count == 0 %}
     <div class="empty-state">
         <p>{% if filtered and has_any_expenses %}No expenses in this date range.{% else %}No expenses yet.{% endif %}</p>
+        <a class="btn-primary" href="{{ url_for('add_expense') }}">Add expense</a>
     </div>
     {% else %}
     <section class="profile-section">

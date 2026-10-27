@@ -10,6 +10,17 @@ DB_PATH = os.path.join(
 )
 
 
+CATEGORIES = (
+    "Food",
+    "Transport",
+    "Bills",
+    "Health",
+    "Entertainment",
+    "Shopping",
+    "Other",
+)
+
+
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -127,6 +138,20 @@ def create_user(name, email, password):
         cur = conn.execute(
             "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
             (name, email, generate_password_hash(password)),
+        )
+        conn.commit()
+        return cur.lastrowid
+    finally:
+        conn.close()
+
+
+def create_expense(user_id, amount, category, date, description):
+    conn = get_db()
+    try:
+        cur = conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (user_id, amount, category, date, description or None),
         )
         conn.commit()
         return cur.lastrowid
