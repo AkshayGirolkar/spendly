@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
@@ -131,18 +131,89 @@ def _format_member_since(raw):
         return raw[:10] if raw else ""
 
 
+INVALID_DATE_MESSAGE = "not a valid date (use YYYY-MM-DD)"
+
+
+def _parse_date(raw):
+    value = (raw or "").strip()
+    if not value:
+        return None, None
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return None, INVALID_DATE_MESSAGE
+    # strptime accepts loose forms like 2024-1-5; the round trip rejects them
+    if parsed.strftime("%Y-%m-%d") != value:
+        return None, INVALID_DATE_MESSAGE
+    return value, None
+
+
+def _parse_date_range(start_raw, end_raw):
+    """Return (start, end, errors) with start/end as ISO strings or None.
+
+    An invalid side is dropped (None) while a valid side still applies.
+    If start is after end, both are dropped so the page shows unfiltered data.
+    """
+    errors = []
+    start, start_error = _parse_date(start_raw)
+    end, end_error = _parse_date(end_raw)
+    if start_error:
+        errors.append(f"Start date is {start_error}.")
+    if end_error:
+        errors.append(f"End date is {end_error}.")
+    if start and end and start > end:
+        errors.append("Start date must not be after end date.")
+        return None, None, errors
+    return start, end, errors
+
+
+def _build_presets(today, start, end):
+    today_iso = today.isoformat()
+    # 29 days back plus today = 30 days inclusive
+    last_30_start = (today - timedelta(days=29)).isoformat()
+    ranges = [
+        ("This month", today.replace(day=1).isoformat(), today_iso),
+        ("Last 30 days", last_30_start, today_iso),
+        ("All time", None, None),
+    ]
+    presets = []
+    for label, p_start, p_end in ranges:
+        if p_start:
+            url = url_for("profile", start=p_start, end=p_end)
+        else:
+            url = url_for("profile")
+        presets.append(
+            {"label": label, "url": url, "active": (p_start, p_end) == (start, end)}
+        )
+    return presets
+
+
 @app.route("/profile")
 def profile():
     user = _get_current_user()
     if user is None:
         return redirect(url_for("login"))
+    start, end, errors = _parse_date_range(
+        request.args.get("start"), request.args.get("end")
+    )
+    filtered = bool(start or end)
+    summary = get_expense_summary(user["id"], start, end)
+    has_any_expenses = summary["count"] > 0
+    if filtered and not has_any_expenses:
+        has_any_expenses = get_expense_summary(user["id"])["count"] > 0
     return render_template(
         "profile.html",
         user=user,
         member_since=_format_member_since(user["created_at"]),
-        summary=get_expense_summary(user["id"]),
-        categories=get_category_totals(user["id"]),
-        recent=get_recent_expenses(user["id"]),
+        summary=summary,
+        categories=get_category_totals(user["id"], start, end),
+        recent=get_recent_expenses(user["id"], start_date=start, end_date=end),
+        start=start,
+        end=end,
+        errors=errors,
+        filtered=filtered,
+        has_any_expenses=has_any_expenses,
+        presets=_build_presets(date.today(), start, end),
     )
 
 
