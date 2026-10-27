@@ -65,40 +65,57 @@ def get_user_by_id(user_id):
         conn.close()
 
 
-def get_expense_summary(user_id):
+def _date_clause(start_date, end_date):
+    # Returns a fixed SQL fragment plus its params; callers must pass the
+    # params in the same order, right after user_id.
+    clause = ""
+    params = []
+    if start_date:
+        clause += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        clause += " AND date <= ?"
+        params.append(end_date)
+    return clause, params
+
+
+def get_expense_summary(user_id, start_date=None, end_date=None):
+    clause, params = _date_clause(start_date, end_date)
     conn = get_db()
     try:
         row = conn.execute(
             "SELECT COALESCE(ROUND(SUM(amount), 2), 0) AS total, COUNT(*) AS count "
-            "FROM expenses WHERE user_id = ?",
-            (user_id,),
+            "FROM expenses WHERE user_id = ?" + clause,
+            (user_id, *params),
         ).fetchone()
         return {"total": row["total"], "count": row["count"]}
     finally:
         conn.close()
 
 
-def get_category_totals(user_id):
+def get_category_totals(user_id, start_date=None, end_date=None):
+    clause, params = _date_clause(start_date, end_date)
     conn = get_db()
     try:
         return conn.execute(
             "SELECT category, ROUND(SUM(amount), 2) AS total "
-            "FROM expenses WHERE user_id = ? "
-            "GROUP BY category ORDER BY total DESC, category ASC",
-            (user_id,),
+            "FROM expenses WHERE user_id = ?" + clause +
+            " GROUP BY category ORDER BY total DESC, category ASC",
+            (user_id, *params),
         ).fetchall()
     finally:
         conn.close()
 
 
-def get_recent_expenses(user_id, limit=10):
+def get_recent_expenses(user_id, limit=10, *, start_date=None, end_date=None):
+    clause, params = _date_clause(start_date, end_date)
     conn = get_db()
     try:
         return conn.execute(
             "SELECT id, amount, category, date, description "
-            "FROM expenses WHERE user_id = ? "
-            "ORDER BY date DESC, id DESC LIMIT ?",
-            (user_id, limit),
+            "FROM expenses WHERE user_id = ?" + clause +
+            " ORDER BY date DESC, id DESC LIMIT ?",
+            (user_id, *params, limit),
         ).fetchall()
     finally:
         conn.close()
