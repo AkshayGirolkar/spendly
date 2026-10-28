@@ -3,7 +3,7 @@ import sqlite3
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, abort, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash
 
 from database.db import (
@@ -11,12 +11,14 @@ from database.db import (
     create_expense,
     create_user,
     get_category_totals,
+    get_expense,
     get_expense_summary,
     get_recent_expenses,
     get_user_by_email,
     get_user_by_id,
     init_db,
     seed_db,
+    update_expense,
 )
 
 app = Flask(__name__)
@@ -289,6 +291,7 @@ def add_expense():
             today=today,
             form={"date": today},
             error=None,
+            editing=False,
         )
 
     clean, error = _validate_expense(request.form)
@@ -299,6 +302,7 @@ def add_expense():
             today=today,
             form=request.form,
             error=error,
+            editing=False,
         )
 
     create_expense(
@@ -311,9 +315,53 @@ def add_expense():
     return redirect(url_for("profile"))
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    user = _get_current_user()
+    if user is None:
+        return redirect(url_for("login"))
+
+    expense = get_expense(id, user["id"])
+    if expense is None:
+        abort(404)
+
+    today = date.today().isoformat()
+    if request.method == "GET":
+        form = dict(expense)
+        form["description"] = form["description"] or ""
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            today=today,
+            form=form,
+            error=None,
+            editing=True,
+            expense=expense,
+        )
+
+    clean, error = _validate_expense(request.form)
+    if error:
+        return render_template(
+            "add_expense.html",
+            categories=CATEGORIES,
+            today=today,
+            form=request.form,
+            error=error,
+            editing=True,
+            expense=expense,
+        )
+
+    updated = update_expense(
+        id,
+        user["id"],
+        clean["amount"],
+        clean["category"],
+        clean["date"],
+        clean["description"],
+    )
+    if not updated:
+        abort(404)
+    return redirect(url_for("profile"))
 
 
 @app.route("/expenses/<int:id>/delete")

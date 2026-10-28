@@ -100,8 +100,8 @@ pytest -s
 | `POST /login` | Implemented — verifies credentials, sets `session["user_id"]`, redirects to `/` |
 | `GET /logout` | Implemented — clears session, redirects to `/` |
 | `GET /profile` | Implemented — renders `profile.html`; redirects to `/login` if logged out |
-| `GET /expenses/add` | Stub — Step 7 |
-| `GET /expenses/<id>/edit` | Stub — Step 8 |
+| `GET, POST /expenses/add` | Implemented — renders `add_expense.html`; validates and creates expense |
+| `GET, POST /expenses/<id>/edit` | Implemented — renders `add_expense.html` pre-filled; validates and updates expense; 404 if missing or not owned |
 | `GET /expenses/<id>/delete` | Stub — Step 9 |
 
 **Do not implement a stub route unless the active task explicitly targets that step.**
