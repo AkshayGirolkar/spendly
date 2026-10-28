@@ -144,6 +144,24 @@
     font-variant-numeric: tabular-nums;
 }
 
+.expense-table .actions {
+    text-align: right;
+}
+
+.expense-table .btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
 .category-chip {
     background: var(--paper-warm);
     color: var(--ink-soft);
